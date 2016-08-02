@@ -32,7 +32,7 @@ function run() {
   _echo "container_id=${container_id}"
 
   docker run --detach --volume="${PWD}":/etc/ansible/roles/role_under_test:ro ${run_opts} ${image}:${tag} "${init}" > "${container_id}"
-  docker exec "$(cat ${container_id})" ansible-galaxy install -r /etc/ansible/roles/role_under_test/requirements.yml
+  docker exec "$(cat ${container_id})" python requirements.py /etc/ansible/roles/role_under_test
 
   _echo "Ansible syntax check."
   docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/$site --syntax-check
@@ -53,6 +53,7 @@ function run() {
   _echo "container_id=${container_id}: $(cat ${container_id})"
   docker stop $(cat ${container_id}) && docker rm $(cat ${container_id})
 }
+
 
 ls -1 ${DockerFilesDir} | awk -F"-" '{print $1 " " $2}' | \
 while read distribution version
