@@ -7,6 +7,7 @@ LGR='\033[1;32m'
 DockerFilesDir=$(dirname $0)/dockerfiles
 RoleDir=/etc/ansible/roles
 Role=${RoleDir}/role_under_test
+Tag=validator
 
 function _echo() {
   echo -e "${LGR}$(date +%d%m%Y-%H:%M:%S) * $1 ${NOC}"
@@ -17,13 +18,18 @@ function build(){
   typeset version=$2
 
   docker pull ${distribution}:${version}
-  #docker build --rm=true --file=${DockerFilesDir}/${distribution}-${version} --tag=${distribution}-${version}:ansible ${DockerFilesDir}
-  docker build --file=${DockerFilesDir}/${distribution}-${version} --tag=${distribution}-${version}:ansible ${DockerFilesDir}
+  docker build --file=${DockerFilesDir}/${distribution}-${version} --tag=${distribution}-${version}:${Tag} ${DockerFilesDir}
+}
+
+function clean(){
+  typeset id=$1
+
+  docker stop ${id} 2>/dev/null
+  docker rm   ${id} 2>/dev/null
 }
 
 function run() {
   typeset image=$1
-  typeset tag=ansible
   typeset test=$2
   typeset run_opts=""
   typeset init=/sbin/init
@@ -34,7 +40,7 @@ function run() {
   _echo "container_id=${container_id}"
 
   _echo "${image} - Initialisation and requirements."
-  docker run --detach --volume="${PWD}":${Role}:ro ${run_opts} ${image}:${tag} "${init}" > "${container_id}"
+  docker run --detach --volume="${PWD}":${Role}:ro ${run_opts} --name="${image}_${Tag}" ${image}:${Tag} "${init}" > "${container_id}"
   docker exec "$(cat ${container_id})" python ${Role}/requirements.py ${Role}
 
   _echo "${image} - Ansible syntax check."
@@ -61,6 +67,7 @@ function run() {
 ls -1 ${DockerFilesDir} | awk -F"-" '{print $1 " " $2}' | \
 while read distribution version
 do
+  clean ${distribution}-${version}_${Tag}
   _echo "build ${distribution} ${version} in progress..."
   build ${distribution} ${version}
   for test in $(ls -1 tests/)
