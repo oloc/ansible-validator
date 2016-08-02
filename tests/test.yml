@@ -1,0 +1,5 @@
+---
+- hosts: all
+  vars: []
+  roles:
+    - role_under_test

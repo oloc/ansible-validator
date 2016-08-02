@@ -1,0 +1,66 @@
+#!/bin/bash -xe
+
+RED='\033[0;31m'
+NOC='\033[0m'
+LGR='\033[1;32m'
+
+DockerFilesDir=$(dirname $0)/dockerfiles
+
+function _echo() {
+  echo -e "${LGR}$(date +%d%m%Y-%H:%M:%S) * $1 ${NOC}"
+}
+
+function build(){
+  typeset distribution=$1
+  typeset version=$2
+
+  docker pull ${distribution}:${version}
+  #docker build --rm=true --file=${DockerFilesDir}/${distribution}-${version} --tag=${distribution}-${version}:ansible ${DockerFilesDir}
+  docker build --file=${DockerFilesDir}/${distribution}-${version} --tag=${distribution}-${version}:ansible ${DockerFilesDir}
+}
+
+function run() {
+  typeset image=$1
+  typeset tag=ansible
+  typeset site=$2
+  typeset run_opts=""
+  typeset init=/sbin/init
+  
+  _echo "*** $image - $site in progress..."
+
+  container_id=$(mktemp)
+  _echo "container_id=${container_id}"
+
+  docker run --detach --volume="${PWD}":/etc/ansible/roles/role_under_test:ro ${run_opts} ${image}:${tag} "${init}" > "${container_id}"
+  docker exec "$(cat ${container_id})" ansible-galaxy install -r /etc/ansible/roles/role_under_test/requirements.yml
+
+  _echo "Ansible syntax check."
+  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/$site --syntax-check
+
+  _echo "Test role."
+  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/$site --verbose
+
+  _echo "Test role idempotence."
+  idempotence=$(mktemp)
+  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/$site --verbose | tee -a ${idempotence}
+
+  tail ${idempotence} \
+  | grep -q 'changed=0.*failed=0' \
+  && (echo 'Idempotence test: pass' && exit 0) \
+  || (echo 'Idempotence test: fail' && exit 1)
+
+  _echo "*** $image - $site done."
+  _echo "container_id=${container_id}: $(cat ${container_id})"
+  docker stop $(cat ${container_id}) && docker rm $(cat ${container_id})
+}
+
+ls -1 ${DockerFilesDir} | awk -F"-" '{print $1 " " $2}' | \
+while read distribution version
+do
+  _echo "build $distribution $version in progress..."
+  build $distribution $version
+  for test in $(ls -1 tests/)
+  do
+    run $distribution-$version $test
+  done
+done
