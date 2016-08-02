@@ -24,34 +24,34 @@ function build(){
 function run() {
   typeset image=$1
   typeset tag=ansible
-  typeset site=$2
+  typeset test=$2
   typeset run_opts=""
   typeset init=/sbin/init
   
-  _echo "*** $image - $site in progress..."
+  _echo "*** $image - ${test} in progress..."
 
   container_id=$(mktemp)
   _echo "container_id=${container_id}"
 
   docker run --detach --volume="${PWD}":${Role}:ro ${run_opts} ${image}:${tag} "${init}" > "${container_id}"
-  docker exec "$(cat ${container_id})" python ${RoleDir}/requirements.py ${Role}
+  docker exec "$(cat ${container_id})" python ${Role}/requirements.py ${Role}
 
   _echo "Ansible syntax check."
-  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook ${Role}/tests/$site --syntax-check
+  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook ${Role}/tests/${test} --syntax-check
 
   _echo "Test role."
-  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook ${Role}/tests/$site --verbose
+  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook ${Role}/tests/${test} --verbose
 
   _echo "Test role idempotence."
   idempotence=$(mktemp)
-  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook {Role}/tests/$site --verbose | tee -a ${idempotence}
+  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook {Role}/tests/${test} --verbose | tee -a ${idempotence}
 
   tail ${idempotence} \
   | grep -q 'changed=0.*failed=0' \
   && (echo 'Idempotence test: pass' && exit 0) \
   || (echo 'Idempotence test: fail' && exit 1)
 
-  _echo "*** $image - $site done."
+  _echo "*** $image - ${test} done."
   _echo "container_id=${container_id}: $(cat ${container_id})"
   docker stop $(cat ${container_id}) && docker rm $(cat ${container_id})
 }
