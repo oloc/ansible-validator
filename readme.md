@@ -1,7 +1,28 @@
 # Ansible Validator
 
-01/08/2016 - En travaux
+Ansible-validator test and validate **Ansible** roles with this:
 
-Petit outil de validation des rôles **Ansible**.
+* Syntax check
+* A first apply
+* A second apply to check idempotence
 
-Pour le petit bout de code python, il faut passer le répertoire du rôle à tester.
+## Usage
+A placer dans le répertoire du rôle à tester, puis procéder à un :
+
+    ./validator
+
+## Jenkins
+
+If you want to use it with Jenkins, you have to add these lines below as a build script :
+
+    rm -rf .git
+    rm readme.md
+    git init
+    git remote add origin git@github.com:olo-dw/ansible-validator.git
+    git fetch
+    git checkout -t origin/master
+    ./validator
+
+## Prerequisites
+
+* Docker
