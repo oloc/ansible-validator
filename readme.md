@@ -6,12 +6,14 @@ Ansible-validator test and validate **Ansible** roles with this:
 * A first apply
 * A second apply to check idempotence
 
-## Usage
-A placer dans le répertoire du rôle à tester, puis procéder à un :
+On the **docker** systems (which are defined in the _dockerfiles_ directory).
+
+## Usage
+Copy all the stuff into the Ansible role directory and run :
 
     ./validator
 
-## Jenkins
+## Jenkins
 
 If you want to use it with Jenkins, you have to add these lines below as a build script :
 
@@ -23,6 +25,6 @@ If you want to use it with Jenkins, you have to add these lines below as a build
     git checkout -t origin/master
     ./validator
 
-## Prerequisites
+## Prerequisites
 
 * Docker
