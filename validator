@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 
 RED='\033[0;31m'
 NOC='\033[0m'
@@ -28,21 +28,22 @@ function run() {
   typeset run_opts=""
   typeset init=/sbin/init
   
-  _echo "*** $image - ${test} in progress..."
+  _echo "*** ${image} - ${test} in progress..."
 
   container_id=$(mktemp)
   _echo "container_id=${container_id}"
 
+  _echo "${image} - Initialisation and requirements."
   docker run --detach --volume="${PWD}":${Role}:ro ${run_opts} ${image}:${tag} "${init}" > "${container_id}"
   docker exec "$(cat ${container_id})" python ${Role}/requirements.py ${Role}
 
-  _echo "Ansible syntax check."
+  _echo "${image} - Ansible syntax check."
   docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook ${Role}/tests/${test} --syntax-check
 
-  _echo "Test role."
+  _echo "${image} - Test role."
   docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook ${Role}/tests/${test} --verbose
 
-  _echo "Test role idempotence."
+  _echo "${image} - Test role idempotence."
   idempotence=$(mktemp)
   docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook {Role}/tests/${test} --verbose | tee -a ${idempotence}
 
@@ -51,7 +52,7 @@ function run() {
   && (echo 'Idempotence test: pass' && exit 0) \
   || (echo 'Idempotence test: fail' && exit 1)
 
-  _echo "*** $image - ${test} done."
+  _echo "*** ${image} - ${test} done."
   _echo "container_id=${container_id}: $(cat ${container_id})"
   docker stop $(cat ${container_id}) && docker rm $(cat ${container_id})
 }
@@ -60,10 +61,10 @@ function run() {
 ls -1 ${DockerFilesDir} | awk -F"-" '{print $1 " " $2}' | \
 while read distribution version
 do
-  _echo "build $distribution $version in progress..."
-  build $distribution $version
+  _echo "build ${distribution} ${version} in progress..."
+  build ${distribution} ${version}
   for test in $(ls -1 tests/)
   do
-    run $distribution-$version $test
+    run ${distribution}-${version} ${test}
   done
 done
