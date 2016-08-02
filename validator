@@ -5,6 +5,8 @@ NOC='\033[0m'
 LGR='\033[1;32m'
 
 DockerFilesDir=$(dirname $0)/dockerfiles
+RoleDir=/etc/ansible/roles
+Role=${RoleDir}/role_under_test
 
 function _echo() {
   echo -e "${LGR}$(date +%d%m%Y-%H:%M:%S) * $1 ${NOC}"
@@ -31,18 +33,18 @@ function run() {
   container_id=$(mktemp)
   _echo "container_id=${container_id}"
 
-  docker run --detach --volume="${PWD}":/etc/ansible/roles/role_under_test:ro ${run_opts} ${image}:${tag} "${init}" > "${container_id}"
-  docker exec "$(cat ${container_id})" python requirements.py /etc/ansible/roles/role_under_test
+  docker run --detach --volume="${PWD}":${Role}:ro ${run_opts} ${image}:${tag} "${init}" > "${container_id}"
+  docker exec "$(cat ${container_id})" python ${RoleDir}/requirements.py ${Role}
 
   _echo "Ansible syntax check."
-  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/$site --syntax-check
+  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook ${Role}/tests/$site --syntax-check
 
   _echo "Test role."
-  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/$site --verbose
+  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook ${Role}/tests/$site --verbose
 
   _echo "Test role idempotence."
   idempotence=$(mktemp)
-  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/$site --verbose | tee -a ${idempotence}
+  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook {Role}/tests/$site --verbose | tee -a ${idempotence}
 
   tail ${idempotence} \
   | grep -q 'changed=0.*failed=0' \
