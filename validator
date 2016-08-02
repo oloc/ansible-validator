@@ -51,7 +51,7 @@ function run() {
 
   _echo "${image} - Test role idempotence."
   idempotence=$(mktemp)
-  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook {Role}/tests/${test} --verbose | tee -a ${idempotence}
+  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook ${Role}/tests/${test} --verbose | tee -a ${idempotence}
 
   tail ${idempotence} \
   | grep -q 'changed=0.*failed=0' \
