@@ -14,7 +14,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        build-essential libssl-dev libffi-dev \
        python-pip python-dev \
-       git ca-certificates \
+       git ca-certificates openssh-client \
     && rm -Rf /var/lib/apt/lists/* \
     && rm -Rf /usr/share/doc && rm -Rf /usr/share/man \
     && apt-get clean
