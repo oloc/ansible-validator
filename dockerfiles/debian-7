@@ -19,9 +19,8 @@ RUN apt-get update \
     && rm -Rf /usr/share/doc && rm -Rf /usr/share/man \
     && apt-get clean
 
-RUN pip install PyYAML jinja2 paramiko
-
-RUN git clone https://github.com/ansible/ansible.git \
+RUN pip install PyYAML jinja2 paramiko \
+    && git clone https://github.com/ansible/ansible.git \
     && cd ansible \
     && make install \
     && mkdir /etc/ansible \
