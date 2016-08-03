@@ -12,7 +12,9 @@ RUN apt-get update \
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       python-pip python-dev git \
+       build-essential libssl-dev libffi-dev \
+       python-pip python-dev \
+       git ca-certificates \
     && rm -Rf /var/lib/apt/lists/* \
     && rm -Rf /usr/share/doc && rm -Rf /usr/share/man \
     && apt-get clean
@@ -20,8 +22,10 @@ RUN apt-get update \
 RUN pip install PyYAML jinja2 paramiko
 
 RUN git clone https://github.com/ansible/ansible.git \
-    && cd ansible
-    && make install
+    && cd ansible \
+    && make install \
+    && mkdir /etc/ansible \
+    && rm -rf /ansible
 
 # Install Ansible inventory file
 RUN echo "[local]\nlocalhost ansible_connection=local" > /etc/ansible/hosts
