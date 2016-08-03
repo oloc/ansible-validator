@@ -39,18 +39,22 @@ function run() {
   _echo "container_id=${container_id}"
 
   _echo "${system} - Initialisation and requirements."
-  docker run --detach --volume="${PWD}":${Role}:ro ${run_opts} --name="${system}_${Tag}" ${system}:${Tag} "${init}" > "${container_id}"
+  docker run --detach --volume="${PWD}":${Role}:ro ${run_opts} --name="${system}_${Tag}" \
+         ${system}:${Tag} "${init}" > "${container_id}"
   docker exec "$(cat ${container_id})" python ${Role}/requirements.py ${Role}
 
   _echo "${system} - Ansible syntax check."
-  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook ${Role}/tests/${test} --syntax-check
+  docker exec --tty "$(cat ${container_id})" env TERM=xterm \
+         ansible-playbook ${Role}/tests/${test} --syntax-check
 
   _echo "${system} - Test role."
-  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook ${Role}/tests/${test} --verbose
+  docker exec --tty "$(cat ${container_id})" env TERM=xterm \
+         ansible-playbook ${Role}/tests/${test} --verbose
 
   _echo "${system} - Test role idempotence."
   idempotence=$(mktemp)
-  docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook ${Role}/tests/${test} --verbose | tee -a ${idempotence}
+  docker exec --tty "$(cat ${container_id})" env TERM=xterm \
+         ansible-playbook ${Role}/tests/${test} --verbose | tee -a ${idempotence}
 
   tail ${idempotence} \
   | grep -q 'changed=0.*failed=0' \
