@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 Name=$(basename $0)
 DirName=$(dirname $0)
@@ -23,8 +23,11 @@ function build(){
 function clean(){
   typeset id=$1
 
-  docker stop ${id} 2>/dev/null
-  docker rm   ${id} 2>/dev/null
+  alive=$(docker ps -q --filter="name=${id}")
+  if [ ${alive} ] ; then
+    docker stop ${id}
+    docker rm   ${id}
+  fi
 }
 
 function run() {
