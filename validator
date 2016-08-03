@@ -1,7 +1,9 @@
 #!/bin/bash
 
 Name=$(basename $0)
-DockerFilesDir=$(dirname $0)/dockerfiles
+DirName=$(dirname $0)
+DockerFilesDir=${DirName}/dockerfiles
+TestsDir=${DirName}/tests
 SystemsList=${Name}.list
 RoleDir=/etc/ansible/roles
 Role=${RoleDir}/role_under_test
@@ -64,6 +66,15 @@ function run() {
 
 if [ ! -s ${SystemsList} ] ; then
   ls -1 ${DockerFilesDir} > ${SystemsList}
+fi
+
+_echo "Checking tests..."
+if [ ! -d ${TestsDir} ] ; then
+  mkdir tests
+fi
+files=(${TestsDir}/*)
+if [ ! ${#files[@]} -gt 0 ]; then
+  cp defaults/test.yml tests/
 fi
 
 cat ${SystemsList} | \
