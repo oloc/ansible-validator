@@ -1,6 +1,8 @@
 #!/bin/bash
 
+Name=$(basename $0)
 DockerFilesDir=$(dirname $0)/dockerfiles
+SystemsList=${Name}.list
 RoleDir=/etc/ansible/roles
 Role=${RoleDir}/role_under_test
 Tag=validator
@@ -60,7 +62,11 @@ function run() {
 
 ### MAIN ###
 
-ls -1 ${DockerFilesDir} | \
+if [ ! -s ${SystemsList} ] ; then
+  ls -1 ${DockerFilesDir} > ${SystemsList}
+fi
+
+cat ${SystemsList} | \
 while read system
 do
   clean ${system}_${Tag}

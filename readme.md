@@ -7,6 +7,12 @@ Ansible-validator test and validate **Ansible** roles with this:
 * A second apply to check idempotence
 
 On the **docker** systems (which are defined in the _dockerfiles_ directory).
+You can select a part of this systems by creating the file named _validator.list_ containing the list of your selection.
+
+Example of _validator.list_:
+
+    debian-8
+    ubuntu-16.04
 
 ## Usage
 Copy all the stuff into the Ansible role directory and run :
