@@ -1,0 +1,27 @@
+FROM debian:7
+MAINTAINER Deveryware
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       software-properties-common \
+    && rm -Rf /var/lib/apt/lists/* \
+    && rm -Rf /usr/share/doc && rm -Rf /usr/share/man \
+    && apt-get clean
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       python-pip python-dev git \
+    && rm -Rf /var/lib/apt/lists/* \
+    && rm -Rf /usr/share/doc && rm -Rf /usr/share/man \
+    && apt-get clean
+
+RUN pip install PyYAML jinja2 paramiko
+
+RUN git clone https://github.com/ansible/ansible.git \
+    && cd ansible
+    && make install
+
+# Install Ansible inventory file
+RUN echo "[local]\nlocalhost ansible_connection=local" > /etc/ansible/hosts
