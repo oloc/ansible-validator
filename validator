@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 Name=$(basename $0)
 DirName=$(dirname $0)
@@ -32,26 +32,27 @@ function run() {
   typeset test=$2
   typeset run_opts=""
   typeset init=/sbin/init
+  typeset prefix="${system} - ${test}"
   
-  _echo "*** ${system} - ${test} in progress..."
+  _echo "*** ${prefix} in progress..."
 
   container_id=$(mktemp)
   _echo "container_id=${container_id}"
 
-  _echo "${system} - Initialisation and requirements."
+  _echo "${prefix} - Initialisation and requirements."
   docker run --detach --volume="${PWD}":${Role}:ro ${run_opts} --name="${system}_${Tag}" \
          ${system}:${Tag} "${init}" > "${container_id}"
   docker exec "$(cat ${container_id})" python ${Role}/requirements.py ${Role}
 
-  _echo "${system} - Ansible syntax check."
+  _echo "${prefix} - Ansible syntax check."
   docker exec --tty "$(cat ${container_id})" env TERM=xterm \
          ansible-playbook ${Role}/tests/${test} --syntax-check
 
-  _echo "${system} - Test role."
+  _echo "${prefix} - Test role."
   docker exec --tty "$(cat ${container_id})" env TERM=xterm \
          ansible-playbook ${Role}/tests/${test} --verbose
 
-  _echo "${system} - Test role idempotence."
+  _echo "${prefix} - Test role idempotence."
   idempotence=$(mktemp)
   docker exec --tty "$(cat ${container_id})" env TERM=xterm \
          ansible-playbook ${Role}/tests/${test} --verbose | tee -a ${idempotence}
@@ -61,7 +62,7 @@ function run() {
   && (echo 'Idempotence test: pass' && exit 0) \
   || (echo 'Idempotence test: fail' && exit 1)
 
-  _echo "*** ${system} - ${test} done."
+  _echo "*** ${prefix} done."
   _echo "container_id=${container_id}: $(cat ${container_id})"
   docker stop $(cat ${container_id}) && docker rm $(cat ${container_id})
 }
@@ -76,8 +77,7 @@ _echo "Checking tests..."
 if [ ! -d ${TestsDir} ] ; then
   mkdir tests
 fi
-files=(${TestsDir}/*)
-if [ ! ${#files[@]} -gt 0 ]; then
+if [ ! "$(ls -A ${TestsDir})" ]; then
   cp defaults/test.yml tests/
 fi
 
@@ -86,7 +86,7 @@ while read system
 do
   clean ${system}_${Tag}
   build ${system}
-  for test in $(ls -1 tests/)
+  for test in $(ls -1 ${TestsDir})
   do
     run ${system} ${test}
   done
