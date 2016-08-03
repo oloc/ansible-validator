@@ -5,14 +5,23 @@
 # Olivier Locard
 
 import os, sys
-import yaml
+import yaml, tempfile
 
 role = sys.argv[1]
 
-file = open(role+"/meta/main.yml", "r")
+file = open(role + "/meta/main.yml", "r")
 content = yaml.load_all(file)
 
-for entry in content:
-  for dependency in entry["dependencies"]:
-    print "Dependency: ", dependency
-    os.system("ansible-galaxy install "+dependency)
+with tempfile.NamedTemporaryFile(delete = False, suffix='.yml') as fileTemp:
+    fileTemp.write("---\n")
+    for entry in content:
+        for dependency in entry["dependencies"]:
+            dep_str= str(dependency)
+            print "Dependency: ", dep_str
+            fileTemp.write("- "+dep_str+"\n")
+
+    os.system("ansible-galaxy install -r "+fileTemp.name)
+
+fileTemp.close()
+
+
