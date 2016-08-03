@@ -20,6 +20,7 @@ with tempfile.NamedTemporaryFile(delete = False, suffix='.yml') as fileTemp:
             print "Dependency: ", dep_str
             fileTemp.write("- "+dep_str+"\n")
 
+    fileTemp.flush()
     os.system("ansible-galaxy install -r "+fileTemp.name)
 
 fileTemp.close()
