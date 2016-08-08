@@ -51,7 +51,6 @@ function run() {
 
   _echo "${prefix} - Initialisation and requirements."
   docker run --detach --volume="${PWD}":${Role}:ro ${run_opts} --name="${container_name}" \
-         --volume $SSH_AUTH_SOCK:/ssh-agent --env SSH_AUTH_SOCK=/ssh-agent \
          ${system}:${Tag} "${init}" > "${container_id}"
   docker exec "$(cat ${container_id})" python ${Role}/requirements.py ${Role}
 
