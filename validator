@@ -39,7 +39,7 @@ function run() {
   
   _echo "*** ${prefix} in progress..."
 
-  container_name="${Tag}_$(cat /dev/urandom | tr -dc A-Za-z0-9 | head -c${1:-8})"
+  container_name="${Tag}_$(cat /dev/urandom | tr -dc A-Za-z0-9 | head -c 8)"
   container_id=$(mktemp)
   _echo "container_id=${container_id} * container_name=${container_name}"
 
