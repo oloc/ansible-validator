@@ -27,6 +27,9 @@ function clean(){
   if [ ${alive} ] ; then
     _echo "docker stop ${container_name}"
     docker stop ${container_name}
+  fi
+  dead=$(docker ps -aq --filter="name=${container_name}")
+  if [ ${dead} ] ; then
     _echo "docker rm   ${container_name}"
     docker rm   ${container_name}
   fi
