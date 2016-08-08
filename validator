@@ -21,12 +21,14 @@ function build(){
 }
 
 function clean(){
-  typeset id=$1
+  typeset container_name=$1
 
-  alive=$(docker ps -q --filter="name=${id}")
+  alive=$(docker ps -q --filter="name=${container_name}")
   if [ ${alive} ] ; then
-    docker stop ${id}
-    docker rm   ${id}
+    _echo "docker stop ${container_name}"
+    docker stop ${container_name}
+    _echo "docker rm   ${container_name}"
+    docker rm   ${container_name}
   fi
 }
 
@@ -70,7 +72,7 @@ function run() {
 
   _echo "*** ${prefix} done."
   _echo "container_id=${container_id}: $(cat ${container_id})"
-  clean $(cat ${container_id})
+  clean ${container_name}
 }
 
 ### MAIN ###
