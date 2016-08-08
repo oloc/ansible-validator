@@ -17,7 +17,7 @@ function build(){
   typeset system=$1
 
   _echo "build ${system} in progress..."
-  docker build --file=${DockerFilesDir}/${system} --tag=${system}:${Tag} ${DockerFilesDir}
+  docker build --pull=false --file=${DockerFilesDir}/${system} --tag=${system}:${Tag} ${DockerFilesDir}
 }
 
 function clean(){
